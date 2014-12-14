@@ -13,7 +13,8 @@ measurements has already been downloaded, and the CSV file extracted into the cu
 
 Hence read in the data, and ensure that the column related to dates is actually treated as a Date type.
 
-```{r echo=TRUE}
+
+```r
 activity <- read.csv( "./activity.csv", header=TRUE )
 activity$date <- as.Date(activity$date, "%Y-%m-%d")
 ```
@@ -27,22 +28,26 @@ shows that this is open to a number of interpretations.
 
 Firstly, let's produce a histogram of the total number of steps taken each day.  
 
-```{r echo=TRUE}
+
+```r
 stepsPerDay <- aggregate(steps ~ date, data=activity, sum)
 hist(stepsPerDay$steps, 
      main="Frequency of daily step totals",
      xlab="Number of steps per day")
 ```
 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
+
 We can also calculate the mean and median total number of steps taken per day.  
 
-```{r echo=TRUE}
+
+```r
 meanStepsPerDay <- as.integer(mean(stepsPerDay$steps))
 medianStepsPerDay <- as.integer(median(stepsPerDay$steps))
 ```
    
-The mean total steps per day is `r meanStepsPerDay`.
-The median total steps per day is `r medianStepsPerDay`.
+The mean total steps per day is 10766.
+The median total steps per day is 10765.
   
   
 ## What is the average daily activity pattern?
@@ -50,7 +55,8 @@ The median total steps per day is `r medianStepsPerDay`.
 Now, let us look at the activity pattern during the day. Average out the activity in the same interval of each day, and then look
 at that 'average' day.  
    
-```{r echo=TRUE}
+
+```r
 meanStepsPerInterval <- aggregate(steps ~ interval, data=activity, mean)
 with(meanStepsPerInterval, plot(interval, 
                             steps, 
@@ -63,31 +69,36 @@ axis(1,
      labels=c('0000', '0600', '1200', '1800', '2400'))
 ```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
+
 There is obviously a peak in activity at one time in the day.
 
-```{r echo=TRUE}
+
+```r
 busiestInterval <- which.max(meanStepsPerInterval$steps)
 busiestHour <- (busiestInterval * 5) %/% 60
 busiestMinute <- (busiestInterval * 5) %% 60
 ```
    
-That is the `r busiestInterval` interval, which occurs at `r busiestHour`:`r busiestMinute`.   
+That is the 104 interval, which occurs at 8:40.   
 
 ## Imputing missing values
 
 There are quite a few intervals with no step data. It is instructive to find out how many.
    
-```{r echo=TRUE}
+
+```r
 numberOfMissingValues <- sum(is.na(activity$steps))
 ```
 
-Since `r numberOfMissingValues` is a large number, these missing values may may well be influencing the previous figures. 
+Since 2304 is a large number, these missing values may may well be influencing the previous figures. 
 There are many ways in which the missing values could be interpolated. We have chosen a simple linear interpolation between 
 the previous and next values which are present.   
 
 First, add an additional column to our existing data set, containing this imputed data.  
 
-```{r echo=TRUE}
+
+```r
 library(zoo)
 activity[1,1] <- 0
 activity[17568,1] <- 0
@@ -97,17 +108,22 @@ activity <- cbind(activity, imputedSteps)
 
 We can now graph that data, and calculate the revised mean and median total number of steps per day.
 
-```{r echo=TRUE}
+
+```r
 imputedStepsPerDay <- aggregate(imputedSteps ~ date, data=activity, sum)
 hist(imputedStepsPerDay$imputedSteps, 
      main="Frequency of daily step totals",
      xlab="Number of steps per day")
+```
 
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
+
+```r
 imputedMeanStepsPerDay <- as.integer(mean(imputedStepsPerDay$imputedSteps))
 imputedMedianStepsPerDay <- as.integer(median(imputedStepsPerDay$imputedSteps))
 ```
 
-Producing a revised mean steps per day of `r imputedMeanStepsPerDay`, and a revised median steps per day of `r imputedMedianStepsPerDay`.   
+Producing a revised mean steps per day of 9354, and a revised median steps per day of 10395.   
 
 So we can see that imputing the missing values using linear interpolation has the effect of reducing the mean and median values.   
    
@@ -118,14 +134,16 @@ Now, it is quite likely that people will have different patterns of activity dur
 
 First, add another column to our activity set to flag whether each reading is from a weekday or the weekend.   
 
-```{r echo=TRUE}
+
+```r
 dayType <- as.factor(ifelse(weekdays(activity$date) %in% c("Saturday", "Sunday"), "weekend", "weekday"))
 activity <- cbind(activity, dayType)
 ```
 
 And we can now create comparative plot for weekday and weekend activity.
 
-```{r echo=TRUE}
+
+```r
 library(lattice)
 meanImputedStepsPerInterval <- aggregate(imputedSteps ~ interval + dayType, data=activity, mean)
 xyplot(imputedSteps ~ interval | dayType, 
@@ -134,4 +152,6 @@ xyplot(imputedSteps ~ interval | dayType,
        type="l",
        ylab="Number of steps")
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png) 
 
